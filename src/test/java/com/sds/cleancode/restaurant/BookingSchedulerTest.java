@@ -3,14 +3,40 @@ package com.sds.cleancode.restaurant;
 
 import org.junit.jupiter.api.Test;
 
-public class BookingSchedulerTest {
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
+import static org.assertj.core.api.Assertions.*;
+public class BookingSchedulerTest {
+    public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+    public static final LocalDateTime ON_THE_HOUR = LocalDateTime.parse("2021/03/26 09:00", FORMAT);
+    public static final LocalDateTime NOT_ON_THE_HOUR = LocalDateTime.parse("2021/03/26 09:05", FORMAT);
+    public static final Customer CUSTOMER = new Customer("Fake name", "010-1234-5678");
+    public static final int UNDER_CAPACITY = 1;
+    public static final int CAPACITY_PER_HOUR = 3;
+
+    BookingScheduler bookingScheduler;
     @Test
     public void 예약은_정시에만_가능하다_정시가_아닌경우_예약불가() {
+
+        Schedule schedule = new Schedule(NOT_ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+
+        //act
+        assertThatThrownBy(() -> {
+            bookingScheduler.addSchedule(schedule);
+        }).isInstanceOf(RuntimeException.class);
     }
 
     @Test
     public void 예약은_정시에만_가능하다_정시인_경우_예약가능() {
+
+        Schedule schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+
+        bookingScheduler.addSchedule(schedule);
+
+        assertThat(bookingScheduler.hasSchedule(schedule)).isEqualTo(true);
     }
 
     @Test
