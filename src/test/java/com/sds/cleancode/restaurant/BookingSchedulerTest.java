@@ -17,7 +17,14 @@ public class BookingSchedulerTest {
     public static final int UNDER_CAPACITY = 1;
     public static final int CAPACITY_PER_HOUR = 3;
 
-    BookingScheduler bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+    BookingScheduler bookingScheduler;
+    TestableSmsSender testableSmsSender = new TestableSmsSender();
+
+    @BeforeEach
+    void setUp() {
+        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+        bookingScheduler.setSmsSender(testableSmsSender);
+    }
 
     @Test
     public void 예약은_정시에만_가능하다_정시가_아닌경우_예약불가() {
@@ -76,6 +83,14 @@ public class BookingSchedulerTest {
 
     @Test
     public void 예약완료시_SMS는_무조건_발송() {
+
+        Schedule schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+
+        //act
+        bookingScheduler.addSchedule(schedule);
+
+        //assert
+        assertThat(testableSmsSender.isSendMethodIsCalled()).isEqualTo(true);
     }
 
     @Test
