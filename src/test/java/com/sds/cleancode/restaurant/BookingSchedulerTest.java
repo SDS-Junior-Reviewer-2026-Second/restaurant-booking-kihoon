@@ -1,8 +1,10 @@
 package com.sds.cleancode.restaurant;
 
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -15,12 +17,13 @@ public class BookingSchedulerTest {
     public static final int UNDER_CAPACITY = 1;
     public static final int CAPACITY_PER_HOUR = 3;
 
-    BookingScheduler bookingScheduler;
+    BookingScheduler bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+
     @Test
     public void 예약은_정시에만_가능하다_정시가_아닌경우_예약불가() {
 
         Schedule schedule = new Schedule(NOT_ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
-        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+        //bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
 
         //act
         assertThatThrownBy(() -> {
@@ -32,7 +35,7 @@ public class BookingSchedulerTest {
     public void 예약은_정시에만_가능하다_정시인_경우_예약가능() {
 
         Schedule schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
-        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+        //bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
 
         bookingScheduler.addSchedule(schedule);
 
@@ -41,10 +44,34 @@ public class BookingSchedulerTest {
 
     @Test
     public void 시간대별_인원제한이_있다_같은_시간대에_Capacity_초과할_경우_예외발생() {
+        Schedule schedule = new Schedule(ON_THE_HOUR, CAPACITY_PER_HOUR, CUSTOMER);
+        bookingScheduler.addSchedule(schedule);
+
+        //act
+        try{
+            Schedule newSchedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+            bookingScheduler.addSchedule(newSchedule);
+            fail();
+        }
+        catch (RuntimeException e){
+            //assert
+            assertThat(e.getMessage()).isEqualTo("Number of people is over restaurant capacity per hour");
+        }
     }
 
     @Test
     public void 시간대별_인원제한이_있다_같은_시간대가_다르면_Capacity_차있어도_스케쥴_추가_성공() {
+        Schedule schedule = new Schedule(ON_THE_HOUR, CAPACITY_PER_HOUR, CUSTOMER);
+        bookingScheduler.addSchedule(schedule);
+
+        //act
+        LocalDateTime differentHour = ON_THE_HOUR.plusHours(1);
+        Schedule newSchedule = new Schedule(differentHour, UNDER_CAPACITY, CUSTOMER);
+        bookingScheduler.addSchedule(newSchedule);
+
+        //assert
+        assertThat(bookingScheduler.hasSchedule(schedule)).isEqualTo(true);
+
     }
 
     @Test
