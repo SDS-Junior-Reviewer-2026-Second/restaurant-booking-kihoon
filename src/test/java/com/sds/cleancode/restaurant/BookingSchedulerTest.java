@@ -4,28 +4,54 @@ package com.sds.cleancode.restaurant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class BookingSchedulerTest {
     public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
     public static final LocalDateTime ON_THE_HOUR = LocalDateTime.parse("2021/03/26 09:00", FORMAT);
     public static final LocalDateTime NOT_ON_THE_HOUR = LocalDateTime.parse("2021/03/26 09:05", FORMAT);
-    public static final Customer CUSTOMER = new Customer("Fake name", "010-1234-5678");
+
+    //public static final Customer CUSTOMER = new Customer("Fake name", "010-1234-5678");
+    //public static final Customer CUSTOMER_WITH_MAIL = new Customer("Fake Name", "010-1234-5678", "test@test.com");
+
+    @Mock
+    public Customer CUSTOMER;
+
+    @Mock(answer = Answers.RETURNS_MOCKS)
+    public Customer CUSTOMER_WITH_MAIL;
+
     public static final int UNDER_CAPACITY = 1;
     public static final int CAPACITY_PER_HOUR = 3;
-    public static final Customer CUSTOMER_WITH_MAIL = new Customer("Fake Name", "010-1234-5678", "test@test.com");
-    BookingScheduler bookingScheduler = new TestableBookingScheduler(CAPACITY_PER_HOUR, "2021/03/26 09:00");
-    TestableSmsSender testableSmsSender = new TestableSmsSender();
-    TestableMailSender testableMailSender = new TestableMailSender();
+    @Spy
+    BookingScheduler bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+    //TestableSmsSender testableSmsSender = new TestableSmsSender();
+    //TestableMailSender testableMailSender = new TestableMailSender();
+
+    @Mock
+    public SmsSender smsSender;
+
+    @Mock
+    public MailSender mailSender;
+
     @BeforeEach
     void setUp() {
-        bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
-        bookingScheduler.setSmsSender(testableSmsSender);
-        bookingScheduler.setMailSender(testableMailSender);
+        //bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
+        //bookingScheduler.setSmsSender(testableSmsSender);
+        //bookingScheduler.setMailSender(testableMailSender);
+        bookingScheduler.setSmsSender(smsSender);
+        bookingScheduler.setMailSender(mailSender);
     }
 
     @Test
@@ -92,7 +118,8 @@ public class BookingSchedulerTest {
         bookingScheduler.addSchedule(schedule);
 
         //assert
-        assertThat(testableSmsSender.isSendMethodIsCalled()).isEqualTo(true);
+        //assertThat(testableSmsSender.isSendMethodIsCalled()).isEqualTo(true);
+        verify(smsSender, times(1)).send(schedule);
     }
 
     @Test
@@ -103,7 +130,8 @@ public class BookingSchedulerTest {
         bookingScheduler.addSchedule(schedule);
 
         //assert
-        assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(0);
+        //assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(0);
+        verify(mailSender, times(0)).sendMail(schedule);
     }
 
     @Test
@@ -114,14 +142,17 @@ public class BookingSchedulerTest {
         bookingScheduler.addSchedule(schedule);
 
         //assert
-        assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(1);
+        //assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(1);
+        verify(mailSender, times(1)).sendMail(schedule);
     }
 
-    @Disabled
+
     @Test
     public void 현재날짜가_일요일인_경우_예약불가_예외처리() {
         //arrange
-        bookingScheduler = new SundayBookingScheduler(CAPACITY_PER_HOUR);
+        LocalDateTime sunday = LocalDateTime.parse("2021/03/28 17:00", FORMAT);
+        when(bookingScheduler.getNow()).thenReturn(sunday);
+        //bookingScheduler = new TestableBookingScheduler(CAPACITY_PER_HOUR, "2021/03/28 17:00");
 
         //act
         try{
@@ -133,11 +164,13 @@ public class BookingSchedulerTest {
         }
     }
 
-    @Disabled
+
     @Test
     public void 현재날짜가_일요일이_아닌경우_예약가능() {
         //arrange
-        bookingScheduler = new MondayBookingScheduler(CAPACITY_PER_HOUR);
+        LocalDateTime monday = LocalDateTime.parse("2024/06/03 17:00", FORMAT);
+        when(bookingScheduler.getNow()).thenReturn(monday);
+        //bookingScheduler = new TestableBookingScheduler(CAPACITY_PER_HOUR, "2024/06/03 17:00");
 
         //act
         Schedule newSchedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
