@@ -16,14 +16,15 @@ public class BookingSchedulerTest {
     public static final Customer CUSTOMER = new Customer("Fake name", "010-1234-5678");
     public static final int UNDER_CAPACITY = 1;
     public static final int CAPACITY_PER_HOUR = 3;
-
+    public static final Customer CUSTOMER_WITH_MAIL = new Customer("Fake Name", "010-1234-5678", "test@test.com");
     BookingScheduler bookingScheduler;
     TestableSmsSender testableSmsSender = new TestableSmsSender();
-
+    TestableMailSender testableMailSender = new TestableMailSender();
     @BeforeEach
     void setUp() {
         bookingScheduler = new BookingScheduler(CAPACITY_PER_HOUR);
         bookingScheduler.setSmsSender(testableSmsSender);
+        bookingScheduler.setMailSender(testableMailSender);
     }
 
     @Test
@@ -95,10 +96,24 @@ public class BookingSchedulerTest {
 
     @Test
     public void 이메일이_없는_경우에는_이메일_미발송() {
+        Schedule schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER);
+
+        //act
+        bookingScheduler.addSchedule(schedule);
+
+        //assert
+        assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(0);
     }
 
     @Test
     public void 이메일이_있는_경우에는_이메일_발송() {
+        Schedule schedule = new Schedule(ON_THE_HOUR, UNDER_CAPACITY, CUSTOMER_WITH_MAIL);
+
+        //act
+        bookingScheduler.addSchedule(schedule);
+
+        //assert
+        assertThat(testableMailSender.getCountSendMailMethodIsCalled()).isEqualTo(1);
     }
 
     @Test
