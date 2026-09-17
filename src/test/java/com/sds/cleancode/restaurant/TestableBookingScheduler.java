@@ -2,16 +2,18 @@ package com.sds.cleancode.restaurant;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
-public class SundayBookingScheduler extends BookingScheduler{
-    public SundayBookingScheduler(int capacityPerHour){
+public class TestableBookingScheduler extends BookingScheduler{
+    private String dateTime;
+
+    public TestableBookingScheduler(int capacityPerHour, String dateTime){
         super(capacityPerHour);
+        this.dateTime = dateTime;
     }
 
     @Override
     public LocalDateTime getNow(){
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
-        return LocalDateTime.parse("2021/03/28 17:00", format);
+        return LocalDateTime.parse(dateTime, format);
     }
 }
